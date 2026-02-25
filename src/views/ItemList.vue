@@ -53,11 +53,12 @@ onMounted(() => {
 });
 
 const openItem = (item) => {
-  if (item.type == "survey") {
-    window.open(`${item.src}`, "_blank"); // 새 창에서 파일 열기
-  } else {
-    window.open(`${r2BucketUrl}${item.src}`, "_blank"); // 새 창에서 파일 열기
-  }
+  // if (item.type == "survey") {
+  //   window.open(`${item.src}`, "_blank"); // 새 창에서 파일 열기
+  // } else {
+  //   window.open(`${r2BucketUrl}${item.src}`, "_blank"); // 새 창에서 파일 열기
+  // }
+  window.open(`${window.location.origin}?content_key=${item.contentKey}`);
 };
 
 // 데이터 로딩 함수
@@ -65,10 +66,21 @@ const getData = async () => {
   try {
     const res = await fetch(`${r2BucketUrl}content_map.json`);
     const data = await res.json();
-    items.value = Object.values(data); // 데이터를 배열로 변환하여 저장
+    items.value = addContentKey(data);
   } catch (error) {
     console.error("Error fetching data:", error);
   }
+};
+
+// 변환 함수
+const addContentKey = (data) => {
+  const transformedData = Object.keys(data).map((key) => {
+    return {
+      ...data[key],
+      contentKey: key, // contentKey를 추가
+    };
+  });
+  return transformedData;
 };
 </script>
 
