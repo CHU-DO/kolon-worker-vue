@@ -53,7 +53,7 @@ export default {
         const db = env.MY_DB;
         const result = await db
           .prepare(
-            "INSERT INTO access_logs (country, region, content_key, content_name, connect_time) VALUES (?, ?, ?, ?, ?, ?)"
+            "INSERT INTO access_logs (country, region, content_key, content_name, connect_time) VALUES (?, ?, ?, ?, ?)"
           )
           .bind(
             request.cf.country,
