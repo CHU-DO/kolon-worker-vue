@@ -50,6 +50,7 @@ export default {
       try {
         const requestBody = await request.json(); // 요청 본문을 JSON으로 파싱
         const { content_key, content_name, connect_time } = requestBody;
+        const db = env.MY_DB;
         const result = await db
           .prepare(
             "INSERT INTO access_logs (country, region, content_key, content_name, connect_time) VALUES (?, ?, ?, ?, ?, ?)"

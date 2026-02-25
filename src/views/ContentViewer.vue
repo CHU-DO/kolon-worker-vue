@@ -45,7 +45,6 @@ const loadGA4Script = () => {
 function gtag() {
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push(arguments);
-  console.log("arguments:", arguments);
 }
 
 // 데이터를 fetch하고 iframe 내용을 설정
