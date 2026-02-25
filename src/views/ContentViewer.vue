@@ -87,7 +87,7 @@ const accessLogWrite = async (itemTitle) => {
   const seconds = String(date.getSeconds()).padStart(2, "0");
 
   // 원하는 포맷으로 문자열 생성
-  const formattedDate = `${year}${month}${day} ${hours}:${minutes}:${seconds}`;
+  const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   const res = await fetch("/access-log/", {
     method: "POST",
     headers: {
@@ -100,7 +100,7 @@ const accessLogWrite = async (itemTitle) => {
     }),
   });
   const data = await res.json();
-  console.log("res:", data);
+  console.log("resresresresres:", data);
 };
 </script>
 
