@@ -22,7 +22,6 @@ const contentKey = params.get("content_key");
 onMounted(() => {
   loadGA4Script();
   fetchData();
-  accessLogWrite();
 });
 
 const loadGA4Script = () => {
@@ -99,11 +98,8 @@ const accessLogWrite = async (itemTitle) => {
       connect_time: formattedDate,
     }),
   });
-  const data = await res.json();
-  console.log("resresresresres:", data);
 };
 </script>
-
 <style scoped>
 .error-message {
   text-align: center;
