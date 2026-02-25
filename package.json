@@ -1,0 +1,26 @@
+{
+	"name": "kolon-worker-vue",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build",
+		"preview": "npm run build && wrangler dev",
+		"deploy": "npm run build && wrangler deploy"
+	},
+	"dependencies": {
+		"vue": "^3.5.28",
+		"vue-router": "^5.0.2"
+	},
+	"devDependencies": {
+		"@cloudflare/vite-plugin": "^1.25.5",
+		"@vitejs/plugin-vue": "^6.0.4",
+		"vite": "^7.3.1",
+		"vite-plugin-vue-devtools": "^8.0.6",
+		"wrangler": "^4.68.1"
+	},
+	"engines": {
+		"node": "^20.19.0 || >=22.12.0"
+	}
+}
