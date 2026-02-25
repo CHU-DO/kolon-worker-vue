@@ -46,14 +46,44 @@ export default {
           headers: { "Content-Type": "application/json" },
         });
       }
-    } else if (url.pathname.startsWith("/logData/")) {
-      return new Response(
-        JSON.stringify({ message: request.cf, isSuccess: true }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+    } else if (url.pathname.startsWith("/access-log/")) {
+      try {
+        const requestBody = await request.json(); // 요청 본문을 JSON으로 파싱
+        const { content_key, content_name, connect_time } = requestBody;
+        const result = await db
+          .prepare(
+            "INSERT INTO access_logs (country, region, content_key, content_name, connect_time) VALUES (?, ?, ?, ?, ?, ?)"
+          )
+          .bind(
+            request.cf.country,
+            request.cf.region,
+            content_key,
+            content_name,
+            connect_time
+          )
+          .run();
+        return new Response(
+          JSON.stringify({
+            message: "접속 기록이 저장 되었습니다.",
+            isSuccess: true,
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      } catch (error) {
+        return new Response(
+          JSON.stringify({
+            message: error.message,
+            isSuccess: false,
+          }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
     }
 
     // /login/ 경로가 아닌 다른 요청은 404로 처리

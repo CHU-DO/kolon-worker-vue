@@ -28,7 +28,7 @@ import { useRouter } from "vue-router";
 const items = ref([]);
 
 const router = useRouter();
-const r2BucketNm = "https://pub-ee4d21cc8d0a487da2147fc062da4bf1.r2.dev/";
+const r2BucketUrl = import.meta.env.VITE_R2_BUCKET_URL;
 
 onMounted(() => {
   // 로그인 여부 확인
@@ -44,14 +44,14 @@ const openItem = (item) => {
   if (item.type == "survey") {
     window.open(`${item.src}`, "_blank"); // 새 창에서 파일 열기
   } else {
-    window.open(`${r2BucketNm}${item.src}`, "_blank"); // 새 창에서 파일 열기
+    window.open(`${r2BucketUrl}${item.src}`, "_blank"); // 새 창에서 파일 열기
   }
 };
 
 // 데이터 로딩 함수
 const getData = async () => {
   try {
-    const res = await fetch(`${r2BucketNm}content_map.json`);
+    const res = await fetch(`${r2BucketUrl}content_map.json`);
     const data = await res.json();
     items.value = Object.values(data); // 데이터를 배열로 변환하여 저장
 

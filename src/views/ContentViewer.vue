@@ -12,24 +12,46 @@ import { ref, onMounted } from "vue";
 
 // Composition API 변수
 const iframeSrc = ref(null);
-
-// r2BucketNm을 외부 URL로 설정
-const r2BucketNm = "https://pub-ee4d21cc8d0a487da2147fc062da4bf1.r2.dev/";
+const r2BucketUrl = import.meta.env.VITE_R2_BUCKET_URL;
 
 // URLSearchParams로 content_key 추출
 const params = new URLSearchParams(window.location.search);
 const contentKey = params.get("content_key");
 
+// 컴포넌트가 마운트될 때 fetchData 호출
+onMounted(() => {
+  loadGA4Script();
+  fetchData();
+  accessLogWrite();
+});
+
+const loadGA4Script = () => {
+  const G4_URL = import.meta.env.VITE_G4_URL;
+  const G4_KEY = import.meta.env.VITE_G4_KEY;
+
+  const script = document.createElement("script");
+  script.src = G4_URL;
+  script.async = true;
+  document.head.appendChild(script);
+  script.onload = () => {
+    gtag("js", new Date());
+    gtag("config", G4_KEY, {
+      anonymize_ip: true,
+    });
+  };
+};
+
 // GA4 gtag 이벤트 호출 함수
 function gtag() {
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push(arguments);
+  console.log("arguments:", arguments);
 }
 
 // 데이터를 fetch하고 iframe 내용을 설정
 const fetchData = async () => {
   try {
-    const response = await fetch(`${r2BucketNm}content_map.json`);
+    const response = await fetch(`${r2BucketUrl}content_map.json`);
     const map = await response.json();
     const item = map[contentKey];
 
@@ -41,29 +63,46 @@ const fetchData = async () => {
     if (item.type === "survey") {
       iframeSrc.value = item.src;
     } else {
-      iframeSrc.value = `${r2BucketNm}${item.src}`;
+      iframeSrc.value = `${r2BucketUrl}${item.src}`;
     }
 
     // GA 이벤트: 콘텐츠 제목 보내기
     gtag("event", "content-title", {
       content_type: item.title,
     });
+
+    await accessLogWrite(item.title);
   } catch (error) {
     iframeSrc.value = null;
   }
 };
 
-const logDataSetting = async () => {
-  const res = await fetch("/logData/");
-  const data = await res.json();
-  console.log("data", data);
-};
+const accessLogWrite = async (itemTitle) => {
+  const date = new Date();
+  // 날짜와 시간을 각각 가져오기
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // 월은 0부터 시작하므로 +1
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
 
-// 컴포넌트가 마운트될 때 fetchData 호출
-onMounted(() => {
-  fetchData();
-  logDataSetting();
-});
+  // 원하는 포맷으로 문자열 생성
+  const formattedDate = `${year}${month}${day} ${hours}:${minutes}:${seconds}`;
+  const res = await fetch("/access-log/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      content_key: contentKey,
+      content_name: itemTitle,
+      connect_time: formattedDate,
+    }),
+  });
+  const data = await res.json();
+  console.log("res:", data);
+};
 </script>
 
 <style scoped>
