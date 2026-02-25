@@ -53,6 +53,9 @@ const handleLogin = async () => {
     if (data.isSuccess) {
       // 로그인 성공 시 localStorage에 로그인 상태 저장
       localStorage.setItem("isLoggedIn", "true"); // 로그인 상태 저장
+      const expirationTime = new Date().getTime() + 30 * 60 * 1000; // 30분 후 시간 (밀리초 단위)
+      localStorage.setItem("loginExpiration", expirationTime); // 만료 시간 저장
+
       // 로그인 성공 시 페이지 이동
       router.push("/itemlist");
     } else {
@@ -64,66 +67,82 @@ const handleLogin = async () => {
   }
 };
 </script>
-
 <style scoped>
-/* 로그인 화면 컨테이너 스타일 */
+/* 로그인 폼 스타일 */
 .login-container {
-  max-width: 400px;
   margin: 0 auto;
-  padding: 2rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px; /* 최대 너비 설정 */
 }
 
-/* 로그인 제목 스타일 */
-.login-title {
+/* 폼 타이틀 */
+h2 {
   text-align: center;
-  margin-bottom: 2rem;
-  font-size: 1.5rem;
+  font-size: 24px;
   font-weight: bold;
   color: #333;
-}
-
-/* 폼 스타일 */
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  margin-bottom: 20px;
 }
 
 /* 입력 필드 스타일 */
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #333;
+  transition: border-color 0.3s ease;
 }
 
-input {
-  padding: 0.8rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-
-input:focus {
+/* 입력 필드 포커스 효과 */
+input[type="text"]:focus,
+input[type="password"]:focus {
+  border-color: #3498db; /* 포커스 시 파란색 */
   outline: none;
-  border-color: #0056b3;
-  box-shadow: 0 0 3px rgba(0, 86, 179, 0.3);
 }
 
 /* 로그인 버튼 스타일 */
-.login-button {
-  padding: 1rem;
-  background-color: #007bff;
-  color: white;
+button {
+  width: 100%;
+  padding: 12px;
+  background-color: #3498db; /* 버튼 배경색 */
+  color: #fff;
+  font-size: 16px;
   border: none;
-  border-radius: 4px;
-  font-size: 1rem;
+  border-radius: 8px;
   cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
-.login-button:hover {
-  background-color: #0056b3;
+/* 버튼 호버 효과 */
+button:hover {
+  background-color: #2980b9; /* 호버 시 색상 변화 */
+}
+
+/* 모바일 친화적인 스타일 */
+@media (max-width: 600px) {
+  .login-container {
+    padding: 20px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  input[type="text"],
+  input[type="password"] {
+    font-size: 14px;
+  }
+
+  button {
+    font-size: 14px;
+  }
 }
 </style>

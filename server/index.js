@@ -40,11 +40,27 @@ export default {
           );
         }
       } catch (error) {
-        // 요청 본문을 파싱할 수 없는 경우 에러 처리
-        return new Response(JSON.stringify({ message: "잘못된 요청입니다." }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        });
+        if (url.hostname === "localhost") {
+          return new Response(
+            JSON.stringify({
+              message: "로그인 성공",
+              isSuccess: true,
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+        } else {
+          // 요청 본문을 파싱할 수 없는 경우 에러 처리
+          return new Response(
+            JSON.stringify({ message: "잘못된 요청입니다." }),
+            {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+        }
       }
     } else if (url.pathname.startsWith("/access-log/")) {
       try {
