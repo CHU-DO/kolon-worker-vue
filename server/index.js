@@ -16,7 +16,11 @@ export default {
         if (result) {
           // 로그인 성공
           return new Response(
-            JSON.stringify({ message: "로그인 성공", isSuccess: true }),
+            JSON.stringify({
+              message: "로그인 성공",
+              isSuccess: true,
+              data: result,
+            }),
             {
               status: 200,
               headers: { "Content-Type": "application/json" },
