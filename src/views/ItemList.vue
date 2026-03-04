@@ -1,20 +1,39 @@
 <template>
-  <div id="item-area">
-    <!-- items 배열을 반복하여 동적으로 아이템을 렌더링 -->
-    <div
-      v-for="(item, index) in items"
-      :key="index"
-      class="item"
-      @click="openItem(item)"
-    >
-      <!-- 타입 표시 -->
-      <div class="item-type">
-        {{ item.type.toUpperCase() }}
-      </div>
-
-      <!-- 제목 표시 -->
-      <div class="item-title">
-        {{ item.title }}
+  <div id="item-list">
+    <div class="container">
+      <h1>2026 코오롱제약 피부과 제품 원클릭 프로젝트</h1>
+    </div>
+    <div id="item-area">
+      <!-- items 배열을 반복하여 동적으로 아이템을 렌더링 -->
+      <div
+        v-for="(item, index) in items"
+        :key="index"
+        class="item"
+        @click="openItem(item)"
+      >
+        <!-- 타입 표시 -->
+        <div class="item-type">
+          {{ item.type.toUpperCase() }}
+        </div>
+        <!-- 제목 표시 -->
+        <div class="item-title">
+          {{ item.title }}
+        </div>
+        <div class="item-title">
+          {{ item.data_type }}
+        </div>
+        <div class="item-title">
+          <!-- QR 코드 이미지 표시 -->
+          <img
+            :src="r2BucketUrl + item.qr_image"
+            alt="QR Code"
+            width="32"
+            height="32"
+          />
+        </div>
+        <div class="item-title">
+          {{ item.date }}
+        </div>
       </div>
     </div>
   </div>
@@ -85,6 +104,28 @@ const addContentKey = (data) => {
 </script>
 
 <style scoped>
+.container {
+  background: linear-gradient(90deg, #0061f2, #00c6ff);
+  padding: 5px;
+  border-radius: 20px; /* 둥근 모서리 */
+  text-align: center;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* 그림자 효과 */
+}
+
+.container h1 {
+  font-size: 24px;
+  color: white;
+  font-weight: bold;
+  margin: 0;
+}
+#item-list {
+  background-color: #f9f9f9; /* 배경 색 */
+  background-image: linear-gradient(90deg, #dcdcdc 1px, transparent 1px),
+    /* 가로 선 */ linear-gradient(180deg, #dcdcdc 1px, transparent 1px); /* 세로 선 */
+  background-size: 20px 20px; /* 모눈 크기 설정 */
+  width: 100%;
+  height: 100%;
+}
 #item-area {
   display: grid;
   grid-template-columns: repeat(
@@ -95,7 +136,7 @@ const addContentKey = (data) => {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto; /* 가운데 정렬 */
-  background-color: #f9f9f9; /* 배경 색 */
+  background-color: transparent;
   border-radius: 10px; /* 모서리 둥글게 */
 }
 
