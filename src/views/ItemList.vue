@@ -105,7 +105,7 @@ const addContentKey = (data) => {
 
 <style scoped>
 .container {
-  max-width: 1200px;
+  max-width: 50%;
   background: linear-gradient(90deg, #0061f2, #00c6ff);
   padding: 5px;
   border-radius: 20px; /* 둥근 모서리 */
@@ -114,7 +114,7 @@ const addContentKey = (data) => {
   margin: 0 auto;
 }
 .container h1 {
-  font-size: 18px;
+  font-size: 2vw;
   color: white;
   font-weight: bold;
   margin: 0;
@@ -156,30 +156,26 @@ const addContentKey = (data) => {
   align-items: center; /* 아이템 제목과 타입을 가운데로 정렬 */
   justify-content: space-between;
 }
-
 .item:hover {
   transform: translateY(-5px); /* 마우스 호버시 위로 이동 */
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* 강한 그림자 */
   background-color: #f0f0f0; /* 배경 색상 변화 */
 }
-
 .item-type {
   background-color: #9ee1a5; /* 타입 배경 색 */
   color: #333; /* 타입 텍스트 색 */
   padding: 5px 15px;
   border-radius: 20px;
-  font-size: 14px;
+  font-size: 1.5vw;
   margin-bottom: 10px; /* 아래 여백 */
   font-weight: bold;
 }
-
 .item-title {
-  font-size: 18px;
+  font-size: 1.5vw;
   font-weight: 500;
   color: #333;
   margin-top: 10px; /* 제목과 타입 간의 여백 */
 }
-
 @media (max-width: 768px) {
   #item-area {
     grid-template-columns: 1fr; /* 작은 화면에서 한 열로 표시 */
