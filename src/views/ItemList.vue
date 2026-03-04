@@ -105,15 +105,16 @@ const addContentKey = (data) => {
 
 <style scoped>
 .container {
+  max-width: 1200px;
   background: linear-gradient(90deg, #0061f2, #00c6ff);
   padding: 5px;
   border-radius: 20px; /* 둥근 모서리 */
   text-align: center;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* 그림자 효과 */
+  margin: 0 auto;
 }
-
 .container h1 {
-  font-size: 24px;
+  font-size: 18px;
   color: white;
   font-weight: bold;
   margin: 0;
@@ -133,7 +134,7 @@ const addContentKey = (data) => {
     minmax(250px, 1fr)
   ); /* 반응형 그리드 레이아웃 */
   gap: 20px;
-  padding: 20px;
+  padding: 10px;
   max-width: 1200px;
   margin: 0 auto; /* 가운데 정렬 */
   background-color: transparent;
@@ -142,7 +143,7 @@ const addContentKey = (data) => {
 
 .item {
   background-color: #fff; /* 아이템 배경 */
-  padding: 20px;
+  padding: 10px;
   border-radius: 12px; /* 둥근 모서리 */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 부드러운 그림자 */
   text-align: center;
