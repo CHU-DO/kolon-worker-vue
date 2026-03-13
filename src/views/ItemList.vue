@@ -27,8 +27,8 @@
           <img
             :src="r2BucketUrl + item.qr_image"
             alt="QR Code"
-            width="32"
-            height="32"
+            width="50"
+            height="50"
           />
         </div>
         <div class="item-title">
