@@ -1,8 +1,12 @@
 <template>
   <div>
     <iframe v-if="iframeSrc" :src="iframeSrc" id="viewer"></iframe>
-    <div v-else class="error-message">
+    <div v-else-if="isError" class="error-message">
       <h2>매핑 정보를 불러오지 못했습니다.</h2>
+    </div>
+
+    <div v-else>
+      <!-- 로딩 -->
     </div>
   </div>
 </template>
@@ -12,6 +16,7 @@ import { ref, onMounted } from "vue";
 
 // Composition API 변수
 const iframeSrc = ref(null);
+const isError = ref(false);
 const r2BucketUrl = import.meta.env.VITE_R2_BUCKET_URL;
 
 // URLSearchParams로 content_key 추출
@@ -55,6 +60,7 @@ const fetchData = async () => {
 
     if (!item) {
       iframeSrc.value = null;
+      isError.value = true;
       return;
     }
 
@@ -64,6 +70,8 @@ const fetchData = async () => {
       iframeSrc.value = `${r2BucketUrl}${item.src}`;
     }
 
+
+
     // GA 이벤트: 콘텐츠 제목 보내기
     gtag("event", "content-title", {
       content_type: item.title,
@@ -71,6 +79,7 @@ const fetchData = async () => {
 
     await accessLogWrite(item.title);
   } catch (error) {
+    isError.value = true;
     iframeSrc.value = null;
   }
 };
