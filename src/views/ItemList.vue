@@ -121,7 +121,8 @@ const addContentKey = (data) => {
 }
 #item-list {
   background-color: #f9f9f9; /* 배경 색 */
-  background-image: linear-gradient(90deg, #dcdcdc 1px, transparent 1px),
+  background-image:
+    linear-gradient(90deg, #dcdcdc 1px, transparent 1px),
     /* 가로 선 */ linear-gradient(180deg, #dcdcdc 1px, transparent 1px); /* 세로 선 */
   background-size: 20px 20px; /* 모눈 크기 설정 */
   width: 100%;
@@ -150,7 +151,9 @@ const addContentKey = (data) => {
   font-size: 16px;
   color: #333; /* 텍스트 색 */
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease; /* 애니메이션 */
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease; /* 애니메이션 */
   display: flex;
   flex-direction: column;
   align-items: center; /* 아이템 제목과 타입을 가운데로 정렬 */

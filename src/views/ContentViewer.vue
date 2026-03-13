@@ -1,124 +1,309 @@
 <template>
-  <div>
-    <iframe v-if="iframeSrc" :src="iframeSrc" id="viewer"></iframe>
-    <div v-else-if="isError" class="error-message">
-      <h2>매핑 정보를 불러오지 못했습니다.</h2>
-    </div>
+    <div class="viewer-container">
+        <!-- loading -->
+        <div v-if="state.loading" class="loading">Loading...</div>
 
-    <div v-else>
-      <!-- 로딩 -->
+        <!-- error -->
+        <div v-else-if="state.error" class="error">
+            <h2>콘텐츠를 불러올 수 없습니다.</h2>
+        </div>
+
+        <!-- iframe viewer -->
+        <iframe
+            v-else-if="viewer.type === 'iframe'"
+            :src="viewer.src"
+            loading="lazy"
+        />
+
+        <!-- sandbox="allow-scripts allow-same-origin allow-forms allow-popups" -->
+
+        <!-- image -->
+        <img
+            v-else-if="viewer.type === 'image'"
+            :src="viewer.src"
+            class="image-viewer"
+        />
+
+        <!-- video -->
+        <video
+            v-else-if="viewer.type === 'video'"
+            controls
+            class="video-viewer"
+        >
+            <source :src="viewer.src" />
+        </video>
+
+        <!-- audio -->
+        <audio v-else-if="viewer.type === 'audio'" controls>
+            <source :src="viewer.src" />
+        </audio>
     </div>
-  </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { reactive, onMounted, onUnmounted } from "vue";
 
-// Composition API 변수
-const iframeSrc = ref(null);
-const isError = ref(false);
-const r2BucketUrl = import.meta.env.VITE_R2_BUCKET_URL;
+/* ---------------- state ---------------- */
 
-// URLSearchParams로 content_key 추출
-const params = new URLSearchParams(window.location.search);
-const contentKey = params.get("content_key");
-
-// 컴포넌트가 마운트될 때 fetchData 호출
-onMounted(() => {
-  loadGA4Script();
-  fetchData();
+const state = reactive({
+    loading: true,
+    error: false,
 });
 
-const loadGA4Script = () => {
-  const G4_URL = import.meta.env.VITE_G4_URL;
-  const G4_KEY = import.meta.env.VITE_G4_KEY;
+const viewer = reactive({
+    type: null,
+    src: null,
+});
 
-  const script = document.createElement("script");
-  script.src = G4_URL;
-  script.async = true;
-  document.head.appendChild(script);
-  script.onload = () => {
-    gtag("js", new Date());
-    gtag("config", G4_KEY, {
-      anonymize_ip: true,
-    });
-  };
-};
+/* ---------------- env ---------------- */
 
-// GA4 gtag 이벤트 호출 함수
+const R2 = import.meta.env.VITE_R2_BUCKET_URL;
+const GA_URL = import.meta.env.VITE_G4_URL;
+const GA_KEY = import.meta.env.VITE_G4_KEY;
+
+/* ---------------- params ---------------- */
+
+const params = new URLSearchParams(location.search);
+const contentKey = params.get("content_key");
+
+/* ---------------- request control ---------------- */
+
+let controller;
+
+/* ---------------- lifecycle ---------------- */
+
+onMounted(() => {
+    loadGA4();
+    loadContent();
+});
+
+onUnmounted(() => {
+    controller?.abort();
+});
+
+/* ---------------- GA4 ---------------- */
+
 function gtag() {
-  window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push(arguments);
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push(arguments);
 }
 
-// 데이터를 fetch하고 iframe 내용을 설정
-const fetchData = async () => {
-  try {
-    const response = await fetch(`${r2BucketUrl}content_map.json`);
-    const map = await response.json();
-    const item = map[contentKey];
+function loadGA4() {
+    if (!GA_URL) return;
 
-    if (!item) {
-      iframeSrc.value = null;
-      isError.value = true;
-      return;
+    const script = document.createElement("script");
+    script.src = GA_URL;
+    script.async = true;
+
+    script.onload = () => {
+        gtag("js", new Date());
+        gtag("config", GA_KEY, { anonymize_ip: true });
+    };
+
+    document.head.appendChild(script);
+}
+
+/* ---------------- cache ---------------- */
+
+let contentMapCache = null;
+
+/* ---------------- main load ---------------- */
+
+async function loadContent() {
+    try {
+        state.loading = true;
+        state.error = false;
+
+        controller?.abort();
+        controller = new AbortController();
+
+        const map = await getContentMap();
+
+        const item = map[contentKey];
+
+        if (!item) throw new Error("content not found");
+
+        setViewer(item);
+
+        sendGA(item.title);
+
+        writeAccessLog(item.title);
+    } catch (err) {
+        if (err.name !== "AbortError") {
+            console.error(err);
+            state.error = true;
+        }
+    } finally {
+        state.loading = false;
+    }
+}
+
+/* ---------------- map fetch with cache ---------------- */
+
+async function getContentMap() {
+    if (contentMapCache) return contentMapCache;
+
+    const res = await fetch(`${R2}content_map.json`);
+
+    if (!res.ok) throw new Error("map fetch fail");
+
+    contentMapCache = await res.json();
+
+    return contentMapCache;
+}
+
+/* ---------------- viewer builder ---------------- */
+
+function setViewer(item) {
+    const url = buildFileUrl(item);
+    const ext = getExt(url);
+
+    if (item.type === "survey") {
+        viewer.type = "iframe";
+        viewer.src = url;
+        return;
     }
 
-    if (item.type == "survey") {
-      iframeSrc.value = item.src;
-    } else if (item.type == "pdf") {
-      iframeSrc.value = `https://docs.google.com/gview?embedded=true&url=${r2BucketUrl}${item.src}`;
-    } else {
-      iframeSrc.value = `${r2BucketUrl}${item.src}`;
+    if (isImage(ext)) {
+        viewer.type = "image";
+        viewer.src = url;
+        return;
     }
 
-    // GA 이벤트: 콘텐츠 제목 보내기
-    gtag("event", "content-title", {
-      content_type: item.title,
+    if (isVideo(ext)) {
+        viewer.type = "video";
+        viewer.src = url;
+        return;
+    }
+
+    if (isAudio(ext)) {
+        viewer.type = "audio";
+        viewer.src = url;
+        return;
+    }
+
+    if (isPdf(ext)) {
+        // if (isMobile()) {
+        //     viewer.type = "iframe";
+        //     viewer.src = googleViewer(url);
+        //     return;
+        // }
+        viewer.type = "iframe";
+        viewer.src = googleViewer(url);
+        return;
+    }
+
+    if (isOffice(ext)) {
+        viewer.type = "iframe";
+        viewer.src = googleViewer(url);
+        return;
+    }
+
+    viewer.type = "iframe";
+    viewer.src = url;
+}
+
+/* ---------------- file helpers ---------------- */
+
+function buildFileUrl(item) {
+    if (item.type === "survey") return item.src;
+
+    return `${R2}${item.src}`;
+}
+
+function googleViewer(url) {
+    return `https://docs.google.com/gview?embedded=true&url=${url}`;
+}
+
+function getExt(url) {
+    return url.split(".").pop().toLowerCase();
+}
+
+function isImage(ext) {
+    return ["jpg", "jpeg", "png", "gif", "webp"].includes(ext);
+}
+
+function isVideo(ext) {
+    return ["mp4", "webm", "mov"].includes(ext);
+}
+
+function isAudio(ext) {
+    return ["mp3", "wav", "ogg"].includes(ext);
+}
+
+function isPdf(ext) {
+    return ext === "pdf";
+}
+
+function isOffice(ext) {
+    return ["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(ext);
+}
+
+function isMobile() {
+    return /iPhone|iPad|Android/i.test(navigator.userAgent);
+}
+
+/* ---------------- analytics ---------------- */
+
+function sendGA(title) {
+    gtag("event", "content-view", {
+        content_name: title,
     });
+}
 
-    await accessLogWrite(item.title);
-  } catch (error) {
-    isError.value = true;
-    iframeSrc.value = null;
-  }
-};
+/* ---------------- access log ---------------- */
 
-const accessLogWrite = async (itemTitle) => {
-  const date = new Date();
-  // 날짜와 시간을 각각 가져오기
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0"); // 월은 0부터 시작하므로 +1
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  const seconds = String(date.getSeconds()).padStart(2, "0");
-
-  // 원하는 포맷으로 문자열 생성
-  const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-  const res = await fetch("/access-log/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      content_key: contentKey,
-      content_name: itemTitle,
-      connect_time: formattedDate,
-    }),
-  });
-};
+async function writeAccessLog(title) {
+    try {
+        await fetch("/access-log/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                content_key: contentKey,
+                content_name: title,
+                connect_time: new Date().toLocaleString("sv-SE"),
+            }),
+        });
+    } catch (err) {
+        console.warn("log fail", err);
+    }
+}
 </script>
+
 <style scoped>
-.error-message {
-  text-align: center;
-  margin-top: 50px;
+.viewer-container {
+    width: 100%;
+    height: 100vh;
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.error {
+    text-align: center;
+    margin-top: 50px;
 }
 
 iframe {
-  width: 100%;
-  height: 100vh; /* iframe이 부모 div의 높이를 꽉 차게 설정 */
-  border: none;
-  overflow: hidden; /* iframe 내부에서 스크롤을 숨김 */
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.image-viewer {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.video-viewer {
+    width: 100%;
+    height: 100%;
 }
 </style>
