@@ -66,7 +66,7 @@ const fetchData = async () => {
 
     if (item.type == "survey") {
       iframeSrc.value = item.src;
-    } else if (item.type == "PDF") {
+    } else if (item.type == "pdf") {
       iframeSrc.value = `https://docs.google.com/gview?embedded=true&url=${r2BucketUrl}${item.src}`;
     } else {
       iframeSrc.value = `${r2BucketUrl}${item.src}`;
