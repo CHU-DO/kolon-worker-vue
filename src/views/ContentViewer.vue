@@ -64,13 +64,13 @@ const fetchData = async () => {
       return;
     }
 
-    if (item.type === "survey") {
+    if (item.type == "survey") {
       iframeSrc.value = item.src;
+    } else if (item.type == "PDF") {
+      iframeSrc.value = `https://docs.google.com/gview?embedded=true&url=${r2BucketUrl}${item.src}`;
     } else {
       iframeSrc.value = `${r2BucketUrl}${item.src}`;
     }
-
-
 
     // GA 이벤트: 콘텐츠 제목 보내기
     gtag("event", "content-title", {
