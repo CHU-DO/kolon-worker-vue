@@ -1,43 +1,40 @@
 <template>
-    <div class="viewer-container">
-        <!-- loading -->
-        <div v-if="state.loading" class="loading">Loading...</div>
+  <div class="viewer-container">
+    <!-- loading -->
+    <div v-if="state.loading" class="loading">Loading...</div>
 
-        <!-- error -->
-        <div v-else-if="state.error" class="error">
-            <h2>콘텐츠를 불러올 수 없습니다.</h2>
-        </div>
-
-        <!-- iframe viewer -->
-        <iframe
-            v-else-if="viewer.type === 'iframe'"
-            :src="viewer.src"
-            loading="lazy"
-        />
-
-        <!-- sandbox="allow-scripts allow-same-origin allow-forms allow-popups" -->
-
-        <!-- image -->
-        <img
-            v-else-if="viewer.type === 'image'"
-            :src="viewer.src"
-            class="image-viewer"
-        />
-
-        <!-- video -->
-        <video
-            v-else-if="viewer.type === 'video'"
-            controls
-            class="video-viewer"
-        >
-            <source :src="viewer.src" />
-        </video>
-
-        <!-- audio -->
-        <audio v-else-if="viewer.type === 'audio'" controls>
-            <source :src="viewer.src" />
-        </audio>
+    <!-- error -->
+    <div v-else-if="state.error" class="error">
+      <h2>콘텐츠를 불러올 수 없습니다.</h2>
     </div>
+
+    <!-- iframe viewer -->
+    <iframe
+      v-else-if="viewer.type === 'iframe'"
+      :src="viewer.src"
+      loading="lazy"
+    />
+
+    <!-- sandbox="allow-scripts allow-same-origin allow-forms allow-popups" -->
+
+    <!-- image -->
+    <img
+      v-else-if="viewer.type === 'image'"
+      :src="viewer.src"
+      class="image-viewer"
+    />
+
+    <!-- video -->
+
+    <video v-else-if="viewer.type === 'video'" controls class="video-viewer">
+      <source :src="viewer.src" />
+    </video>
+
+    <!-- audio -->
+    <audio v-else-if="viewer.type === 'audio'" controls>
+      <source :src="viewer.src" />
+    </audio>
+  </div>
 </template>
 
 <script setup>
@@ -46,13 +43,13 @@ import { reactive, onMounted, onUnmounted } from "vue";
 /* ---------------- state ---------------- */
 
 const state = reactive({
-    loading: true,
-    error: false,
+  loading: true,
+  error: false,
 });
 
 const viewer = reactive({
-    type: null,
-    src: null,
+  type: null,
+  src: null,
 });
 
 /* ---------------- env ---------------- */
@@ -73,34 +70,38 @@ let controller;
 /* ---------------- lifecycle ---------------- */
 
 onMounted(() => {
-    loadGA4();
-    loadContent();
+  loadGA4();
+  loadContent();
 });
 
 onUnmounted(() => {
-    controller?.abort();
+  controller?.abort();
 });
+
+function setFullHeight() {
+  const height = window.innerHeight;
+  document.documentElement.style.setProperty("--real-vh", `${height}px`);
+}
 
 /* ---------------- GA4 ---------------- */
 
 function gtag() {
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push(arguments);
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push(arguments);
 }
 
 function loadGA4() {
-    if (!GA_URL) return;
+  if (!GA_URL) return;
 
-    const script = document.createElement("script");
-    script.src = GA_URL;
-    script.async = true;
+  const script = document.createElement("script");
+  script.src = GA_URL;
+  script.async = true;
 
-    script.onload = () => {
-        gtag("js", new Date());
-        gtag("config", GA_KEY, { anonymize_ip: true });
-    };
-
-    document.head.appendChild(script);
+  script.onload = () => {
+    gtag("js", new Date());
+    gtag("config", GA_KEY, { anonymize_ip: true });
+  };
+  document.head.appendChild(script);
 }
 
 /* ---------------- cache ---------------- */
@@ -110,200 +111,208 @@ let contentMapCache = null;
 /* ---------------- main load ---------------- */
 
 async function loadContent() {
-    try {
-        state.loading = true;
-        state.error = false;
+  try {
+    state.loading = true;
+    state.error = false;
 
-        controller?.abort();
-        controller = new AbortController();
+    controller?.abort();
+    controller = new AbortController();
 
-        const map = await getContentMap();
+    const map = await getContentMap();
 
-        const item = map[contentKey];
+    const item = map[contentKey];
 
-        if (!item) throw new Error("content not found");
+    if (!item) throw new Error("content not found");
 
-        setViewer(item);
+    setViewer(item);
 
-        sendGA(item.title);
+    sendGA(item.title);
 
-        writeAccessLog(item.title);
-    } catch (err) {
-        if (err.name !== "AbortError") {
-            console.error(err);
-            state.error = true;
-        }
-    } finally {
-        state.loading = false;
+    writeAccessLog(item.title);
+  } catch (err) {
+    if (err.name !== "AbortError") {
+      console.error(err);
+      state.error = true;
     }
+  } finally {
+    state.loading = false;
+  }
 }
 
 /* ---------------- map fetch with cache ---------------- */
 
 async function getContentMap() {
-    if (contentMapCache) return contentMapCache;
+  if (contentMapCache) return contentMapCache;
 
-    const res = await fetch(`${R2}content_map.json`);
+  const res = await fetch(`${R2}content_map.json`);
 
-    if (!res.ok) throw new Error("map fetch fail");
+  if (!res.ok) throw new Error("map fetch fail");
 
-    contentMapCache = await res.json();
+  contentMapCache = await res.json();
 
-    return contentMapCache;
+  return contentMapCache;
 }
 
 /* ---------------- viewer builder ---------------- */
 
 function setViewer(item) {
-    const url = buildFileUrl(item);
-    const ext = getExt(url);
+  const url = buildFileUrl(item);
+  const ext = getExt(url);
 
-    if (item.type === "survey") {
-        viewer.type = "iframe";
-        viewer.src = url;
-        return;
-    }
-
-    if (isImage(ext)) {
-        viewer.type = "image";
-        viewer.src = url;
-        return;
-    }
-
-    if (isVideo(ext)) {
-        viewer.type = "video";
-        viewer.src = url;
-        return;
-    }
-
-    if (isAudio(ext)) {
-        viewer.type = "audio";
-        viewer.src = url;
-        return;
-    }
-
-    if (isPdf(ext)) {
-        // if (isMobile()) {
-        //     viewer.type = "iframe";
-        //     viewer.src = googleViewer(url);
-        //     return;
-        // }
-        viewer.type = "iframe";
-        viewer.src = googleViewer(url);
-        return;
-    }
-
-    if (isOffice(ext)) {
-        viewer.type = "iframe";
-        viewer.src = googleViewer(url);
-        return;
-    }
-
+  if (item.type === "survey") {
     viewer.type = "iframe";
     viewer.src = url;
+    return;
+  }
+
+  if (isImage(ext)) {
+    viewer.type = "image";
+    viewer.src = url;
+    return;
+  }
+
+  if (isVideo(ext)) {
+    viewer.type = "video";
+    viewer.src = url;
+    return;
+  }
+
+  if (isAudio(ext)) {
+    viewer.type = "audio";
+    viewer.src = url;
+    return;
+  }
+
+  if (isPdf(ext)) {
+    // if (isMobile()) {
+    //     viewer.type = "iframe";
+    //     viewer.src = googleViewer(url);
+    //     return;
+    // }
+    viewer.type = "iframe";
+    viewer.src = googleViewer(url);
+    return;
+  }
+
+  if (isOffice(ext)) {
+    viewer.type = "iframe";
+    viewer.src = googleViewer(url);
+    return;
+  }
+
+  viewer.type = "iframe";
+  viewer.src = url;
 }
 
 /* ---------------- file helpers ---------------- */
 
 function buildFileUrl(item) {
-    if (item.type === "survey") return item.src;
+  if (item.type === "survey") return item.src;
 
-    return `${R2}${item.src}`;
+  return `${R2}${item.src}`;
 }
 
 function googleViewer(url) {
-    return `https://docs.google.com/gview?embedded=true&url=${url}`;
+  return `https://docs.google.com/gview?embedded=true&url=${url}`;
 }
 
 function getExt(url) {
-    return url.split(".").pop().toLowerCase();
+  return url.split(".").pop().toLowerCase();
 }
 
 function isImage(ext) {
-    return ["jpg", "jpeg", "png", "gif", "webp"].includes(ext);
+  return ["jpg", "jpeg", "png", "gif", "webp"].includes(ext);
 }
 
 function isVideo(ext) {
-    return ["mp4", "webm", "mov"].includes(ext);
+  return ["mp4", "webm", "mov"].includes(ext);
 }
 
 function isAudio(ext) {
-    return ["mp3", "wav", "ogg"].includes(ext);
+  return ["mp3", "wav", "ogg"].includes(ext);
 }
 
 function isPdf(ext) {
-    return ext === "pdf";
+  return ext === "pdf";
 }
 
 function isOffice(ext) {
-    return ["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(ext);
+  return ["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(ext);
 }
 
 function isMobile() {
-    return /iPhone|iPad|Android/i.test(navigator.userAgent);
+  return /iPhone|iPad|Android/i.test(navigator.userAgent);
 }
 
 /* ---------------- analytics ---------------- */
 
 function sendGA(title) {
-    gtag("event", "content-view", {
-        content_name: title,
-    });
+  gtag("event", "content-view", {
+    content_name: title,
+  });
 }
 
 /* ---------------- access log ---------------- */
 
 async function writeAccessLog(title) {
-    try {
-        await fetch("/access-log/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                content_key: contentKey,
-                content_name: title,
-                connect_time: new Date().toLocaleString("sv-SE"),
-            }),
-        });
-    } catch (err) {
-        console.warn("log fail", err);
-    }
+  try {
+    await fetch("/access-log/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        content_key: contentKey,
+        content_name: title,
+        connect_time: new Date().toLocaleString("sv-SE"),
+      }),
+    });
+  } catch (err) {
+    console.warn("log fail", err);
+  }
 }
 </script>
 
 <style scoped>
 .viewer-container {
-    width: 100%;
-    height: 100vh;
-}
-
-.loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-}
-
-.error {
-    text-align: center;
-    margin-top: 50px;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
+  width: 100%;
+  height: 95%;
+  margin-top: 40px;
+  border: none;
 }
 
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.error {
+  text-align: center;
+  margin-top: 50px;
+}
+
+/* iframe {
+  width: 100%;
+  height: 100dvh;
+  border: none;
+} */
+
 .image-viewer {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+  width: 100%;
+  height: 100vh;
+  object-fit: contain;
 }
 
 .video-viewer {
-    width: 100%;
-    height: 100%;
+  width: 100%;
+  height: 100vh;
 }
 </style>
