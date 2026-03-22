@@ -201,9 +201,6 @@ function setViewer(item) {
             viewer.mobile = true;
         }
 
-        viewer.mobile = false;
-        console.log("viewer.mobile:", "테스트");
-
         viewer.type = "iframe";
         viewer.src = googleViewer(url);
         return;
